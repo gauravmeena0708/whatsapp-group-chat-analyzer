@@ -10,7 +10,7 @@ pip install -e git+https://github.com/gauravmeena0708/whatsapp-tools#egg=whatsap
 
 ```python
 
-from groupanalyzer import GroupAnalyzer
+from whatsapptools import GroupAnalyzer
 analyzer = GroupAnalyzer("data/WhatsApp_Chat3.txt")
 df = analyzer.parse_chat_data()
 df.head()
