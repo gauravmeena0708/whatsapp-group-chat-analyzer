@@ -3,7 +3,7 @@
 ## ToDo
 1. GroupChat Analysis
 
-The methods are listed below : 
+other task yet to accomplish are : 
 
     basicStats : It will return some basic stats of group. Such as total users, total messages, total media messages and total link shared.
     wordCloud : It will create a word cloud, through which we can easily understand the most frequent words used in chat.
