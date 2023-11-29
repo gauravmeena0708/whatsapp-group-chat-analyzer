@@ -4,19 +4,19 @@ with open('README.md', 'r', encoding='utf-8') as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name='example_pypi_package',
-    author='Tom Chen',
-    author_email='tomchen.org@gmail.com',
-    description='Example PyPI (Python Package Index) Package',
-    keywords='example, pypi, package',
+    name='Whatsapp tools',
+    author='Gaurav Meena',
+    author_email='gauravmeena0708@gmail.com',
+    description='a starting package for analysis',
+    keywords='whatsapp, pypi, package',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    url='https://github.com/tomchen/example_pypi_package',
+    url='https://github.com/gauravmeena0708/whatsapp-tools',
     project_urls={
-        'Documentation': 'https://github.com/tomchen/example_pypi_package',
+        'Documentation': 'https://github.com/gauravmeena0708/whatsapp-tools',
         'Bug Reports':
-        'https://github.com/tomchen/example_pypi_package/issues',
-        'Source Code': 'https://github.com/tomchen/example_pypi_package',
+        'https://github.com/gauravmeena0708/whatsapp-tools/issues',
+        'Source Code': 'https://github.com/gauravmeena0708/whatsapp-tools',
         # 'Funding': '',
         # 'Say Thanks!': '',
     },
