@@ -1,7 +1,25 @@
 # Whatsapp Tools
 
+## install
+
+```bash
+pip install -e git+https://github.com/gauravmeena0708/whatsapp-tools#egg=whatsapptools
+```
+
+### Example Use
+
+```python
+
+from groupanalyzer import GroupAnalyzer
+analyzer = GroupAnalyzer("data/WhatsApp_Chat3.txt")
+df = analyzer.parse_chat_data()
+df.head()
+analyzer.generate_wordcloud(df["message"].str.cat(sep=" "), [])
+```
+
+
 ## ToDo
-1. GroupChat Analysis
+    GroupChat Analysis
 
 other task yet to accomplish are : 
 
