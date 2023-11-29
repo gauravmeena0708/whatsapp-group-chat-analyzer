@@ -1,6 +1,6 @@
 import unittest
 
-from whatsapptools.groupanalyzer import parse_chat_data
+from whatsapptools.groupanalyzer import GroupAnalyzer
 
 
 class TestSimple(unittest.TestCase):
