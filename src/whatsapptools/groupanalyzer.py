@@ -78,7 +78,7 @@ class GroupAnalyzer:
         
     def get_emojis(self, text):
         emoji_list = []
-        data = re.findall(r'\X', text)
+        data = re.findall(r'\\X', text)
         for word in data:
             if any(char in emoji.EMOJI_DATA for char in word):
                 emoji_list.append(word)
