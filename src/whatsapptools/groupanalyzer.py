@@ -129,7 +129,7 @@ class GroupAnalyzer:
         
         df["mediacount"] = np.where(df["message"] == "<Media omitted>", 1, 0)
         df["editcount"]  = np.where(df["message"].str.contains("<This message was edited>"), 1, 0) 
-        df["deletecount"]  = np.where((df["message"] == "This message was deleted" | df["message"] == "You deleted this message"), 1, 0) 
+        df["deletecount"]  = np.where(((df["message"] == "This message was deleted") | (df["message"] == "You deleted this message")),1, 0) 
 
         df.drop('t', inplace=True, axis=1)
         df = df[[ 'date_time','date','year','month','monthn','day','dayn',
