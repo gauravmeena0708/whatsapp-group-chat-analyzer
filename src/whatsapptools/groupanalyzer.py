@@ -2,9 +2,11 @@ import re
 from datetime import datetime
 import pandas as pd
 import nltk
+import emoji
 from nltk.corpus import stopwords
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
+from calendar import day_name
 
 """
 from groupanalyzer import GroupAnalyzer
@@ -14,8 +16,12 @@ df.head()
 analyzer.generate_wordcloud(df["message"].str.cat(sep=" "), [])
 """
 class GroupAnalyzer:
+    URL_PATTERN      = r'(https?://\S+)'
+    YOUTUBE_PATTERN = r'(https?://youtu(\.be|be\.com)\S+)'
     def __init__(self, file_path):
         self.file_path = file_path
+        self.youtube_pattern = YOUTUBE_PATTERN
+        self.url_pattern     = URL_PATTERN
 
     def parse_chat_data(self):
         with open(self.file_path, "r", encoding="utf-8") as file:
@@ -72,6 +78,69 @@ class GroupAnalyzer:
         plt.axis("off")
         plt.show()
         
+    def get_emojis(self, text):
+        emoji_list = []
+        data = regex.findall(r'\X', text)
+        for word in data:
+            if any(char in emoji.EMOJI_DATA for char in word):
+                emoji_list.append(word)
+        return emoji_list
+
+    def get_urls(self, text):
+        url_list = regex.findall(self.url_pattern, text)
+        return url_list
+
+    def get_yturls(self, text):
+        url_list = regex.findall(self.youtube_pattern, text)
+        return url_list
+    
+    def df_basic_cleanup(self, df):
+        df['date_time'] = pd.to_datetime(df['t'], format='%d/%m/%y, %I:%M %p')
+        df['date']      = pd.to_datetime(df['date_time']).dt.date
+        df['year']      = pd.to_datetime(df['date_time']).dt.year
+        df['month']     = pd.to_datetime(df['date_time']).dt.month.astype(str).str.zfill(2)
+        df['day']       = pd.to_datetime(df['date_time']).dt.day
+
+        df['dayn']      = pd.to_datetime(df['date_time']).dt.day_name().astype('category')
+        df['monthn']    = pd.to_datetime(df['date_time'],format='%d/%m/%y, %I:%M %p').dt.month_name()
+
+        df['doy']       = pd.to_datetime(df['date_time']).dt.day_of_year
+        df['dow']       = pd.to_datetime(df['date_time']).dt.day_of_week
+        df['woy']       = pd.to_datetime(df['date_time']).dt.week
+
+        df['time']      = pd.to_datetime(df['date_time']).dt.time
+        df['hour']      = pd.to_datetime(df['date_time']).dt.hour
+        df['min']       = pd.to_datetime(df['date_time']).dt.minute
+        df['hm']        = df['hour'] + round(df['min']/60,2)
+
+        df['ym']        = df['year'].astype(str)   +'-'+ df['month'].astype(str)
+        df['yw']        = df['year'].astype(str)   +'-'+ df['woy'].astype(str)
+        df['yd']        = df['year'].astype(str)   +'-'+ df['doy'].astype(str)
+        df['md']        = df['monthn'].astype(str) +'-'+ df['date'].astype(str)
+
+        df['mlen']      = df['message'].str.len()
+
+        df["emoji"]     = df["message"].apply(self.get_emojis)
+        df["emojicount"]= df["emoji"].str.len()
+
+        df['urls']      = df["message"].apply(self.get_urls)
+        df['urlcount']  = df["urls"].str.len()
+
+        df['yturls']      = df["message"].apply(self.get_yturls)
+        df['yturlcount']  = df["yturls"].str.len()
+
+        df.drop('t', inplace=True, axis=1)
+        df = df[[ 'date_time','date','year','month','monthn','day','dayn',
+                  'woy', 'doy','dow',
+                  'ym','yw','yd','md',
+                  'time','hour','min', 'hm',
+                  'name',
+                  'message','mlen',
+                  'emoji','emojicount',
+                  'urls','urlcount',
+                  'yturls','yturlcount'
+                ]]
+        return df
         """
         from nltk.corpus import stopwords
         from nltk.tokenize import word_tokenize
