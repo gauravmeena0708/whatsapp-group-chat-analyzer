@@ -85,7 +85,7 @@ class GroupAnalyzer:
         return emoji_list
 
     def get_urls(self, text):
-        url_list = reg.findall(self.url_pattern, text)
+        url_list = re.findall(self.url_pattern, text)
         return url_list
 
     def get_yturls(self, text):
