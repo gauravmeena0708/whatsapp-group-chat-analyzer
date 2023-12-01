@@ -6,6 +6,7 @@ from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 from calendar import day_name
 import numpy as np
+import plotly.express as px
 
 """
 from groupanalyzer import GroupAnalyzer
@@ -143,6 +144,27 @@ class GroupAnalyzer:
                   'yturls','yturlcount','mediacount','editcount','deletecount'
                 ]]
         return df
+        
+    def create_plotly_fig(self, data,x,y,sortby,asc=False,count=True):
+        if count:
+            grouped_data =data.groupby(x,as_index=False)[y].count()
+        else:
+            grouped_data =data.groupby(x,as_index=False)[y].sum()
+        if sortby!=0:
+            grouped_data = grouped_data.sort_values(sortby, ascending=asc)
+        
+        fig = px.line(
+            x=list(grouped_data[x]),
+            y=list(grouped_data[y]),
+            title= 'Number of '+y+ ' by '+x,
+            labels={
+                'x': x,
+                'y': 'Number of '+y
+            }
+          )
+          # Show the figure.
+        return fig #.show()
+
         """
         from nltk.corpus import stopwords
         from nltk.tokenize import word_tokenize
