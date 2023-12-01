@@ -1,4 +1,4 @@
-import re, nltk, emoji
+import re, regex, nltk, emoji
 from datetime import datetime
 import pandas as pd
 from nltk.corpus import stopwords
@@ -78,14 +78,14 @@ class GroupAnalyzer:
         
     def get_emojis(self, text):
         emoji_list = []
-        data = re.findall(r'\\X', text)
+        data = regex.findall(r'\X', text)
         for word in data:
             if any(char in emoji.EMOJI_DATA for char in word):
                 emoji_list.append(word)
         return emoji_list
 
     def get_urls(self, text):
-        url_list = re.findall(self.url_pattern, text)
+        url_list = regex.findall(self.url_pattern, text)
         return url_list
 
     def get_yturls(self, text):
