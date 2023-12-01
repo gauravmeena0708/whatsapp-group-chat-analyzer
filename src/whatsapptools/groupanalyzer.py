@@ -23,7 +23,7 @@ class GroupAnalyzer:
 
         chat_data = []
         for line in chat_lines:
-            match = re.match(r'(\d{2}\/\d{2}\/\d{2}, \d{1,2}:\d{2} [apm]{2}) - (.*?):(.*)', line)
+            match = re.match(r'(\d{2}\/\d{2}\/\d{2}, \d{1,2}:\d{2} [apm]{2}) - (.*?): (.*)', line)
             if match:
                 timestamp, sender, message = match.groups()
                 date_obj = datetime.strptime(timestamp, '%d/%m/%y, %I:%M %p')
