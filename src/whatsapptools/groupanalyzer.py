@@ -106,8 +106,7 @@ class GroupAnalyzer:
 
         df['doy']       = pd.to_datetime(df['date_time']).dt.day_of_year
         df['dow']       = pd.to_datetime(df['date_time']).dt.day_of_week
-        #df['woy']       = pd.to_datetime(df['date_time']).dt.week
-
+        df['woy']       = pd.to_datetime(df['date_time']).dt.isocalendar().week
         df['time']      = pd.to_datetime(df['date_time']).dt.time
         df['hour']      = pd.to_datetime(df['date_time']).dt.hour
         df['min']       = pd.to_datetime(df['date_time']).dt.minute
