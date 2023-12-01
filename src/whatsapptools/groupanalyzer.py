@@ -17,11 +17,11 @@ analyzer.generate_wordcloud(df["message"].str.cat(sep=" "), [])
 """
 class GroupAnalyzer:
     URL_PATTERN      = r'(https?://\S+)'
-    YOUTUBE_PATTERN = r'(https?://youtu(\.be|be\.com)\S+)'
+    YOUTUBE_PATTERN  = r'(https?://youtu(\.be|be\.com)\S+)'
     def __init__(self, file_path):
         self.file_path = file_path
-        self.youtube_pattern = YOUTUBE_PATTERN
-        self.url_pattern     = URL_PATTERN
+        self.youtube_pattern = self.YOUTUBE_PATTERN
+        self.url_pattern     = self.URL_PATTERN
 
     def parse_chat_data(self):
         with open(self.file_path, "r", encoding="utf-8") as file:
