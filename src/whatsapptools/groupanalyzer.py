@@ -138,7 +138,7 @@ class GroupAnalyzer:
                   'message','mlen',
                   'emoji','emojicount',
                   'urls','urlcount',
-                  'yturls','yturlcount'
+                  'yturls','yturlcount','mediacount'
                 ]]
         return df
         """
