@@ -71,3 +71,38 @@ class GroupAnalyzer:
         plt.imshow(wordcloud, interpolation="bilinear")
         plt.axis("off")
         plt.show()
+        
+"""
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+
+def calculate_word_frequency(string):
+  """
+  Calculates word frequency for words excluding stopwords.
+
+  Args:
+    string: The string to analyze.
+
+  Returns:
+    A dictionary mapping each word to its frequency.
+  """
+  stopwords_list = set(stopwords.words("english"))
+  tokens = word_tokenize(string.lower())
+  filtered_tokens = [token for token in tokens if token not in stopwords_list]
+  word_counts = {}
+  for token in filtered_tokens:
+    if token not in word_counts:
+      word_counts[token] = 0
+    word_counts[token] += 1
+  return word_counts
+
+# Example usage
+string = "This is a string with stopwords that we want to remove."
+word_counts = calculate_word_frequency(string)
+
+# Print the word frequencies
+for word, count in word_counts.items():
+  print(f"{word}: {count}")
+
+
+"""
