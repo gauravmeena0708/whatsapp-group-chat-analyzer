@@ -14,7 +14,64 @@ from whatsapptools import GroupAnalyzer
 analyzer = GroupAnalyzer("data/WhatsApp_Chat3.txt")
 df = analyzer.parse_chat_data()
 df.head()
-analyzer.generate_wordcloud(df["message"].str.cat(sep=" "), [])
+
+```
+
+```python
+
+df1 = analyzer.df_basic_cleanup(df)
+df1.head()
+
+```
+
+```python
+
+from nltk.corpus import stopwords
+
+custom_stopwords = {"Bhai", "<Media omitted>", "Media omitted", "Media","omitted", "bro", 'would', 'ye', 'ke', 'ko', 'doge', 'aap', 'tum', 'hai'
+                    }
+stop_words1 = set(stopwords.words('english'))
+stop_words2 = set(stopwords.words('english')).union(custom_stopwords)
+analyzer.generate_wordcloud(df["message"].str.cat(sep=" "), stop_words1)
+analyzer.generate_wordcloud(df["message"].str.cat(sep=" "), stop_words2)
+
+```
+
+```python
+
+analyzer.create_plotly_fig(df,'name','message','message')
+analyzer.create_plotly_fig(df,'ym','message','ym',True)
+#create_plotly_fig(df,'dt','message','dt',True)
+analyzer.create_plotly_fig(df,'day','message','day',False)
+analyzer.create_plotly_fig(df,'yd','message','yd',True)
+analyzer.create_plotly_fig(df,'name','emojicount','emojicount',True,False)
+analyzer.create_plotly_fig(df,'name','urlcount','urlcount',True,False)
+
+
+#to get emojicount visualization
+fig1 = analyzer.create_plotly_fig(df1,'name','emojicount','emojicount')
+fig1.show()
+
+#to get urlcount visualization
+fig1 = analyzer.create_plotly_fig(df1,'name','urlcount','urlcount')
+fig1.show()
+
+#to get yturlcount visualization
+fig1 = analyzer.create_plotly_fig(df1,'name','yturlcount','yturlcount')
+fig1.show()
+
+#to get mediacount visualization
+fig1 = analyzer.create_plotly_fig(df1,'name','mediacount','mediacount',count=False)
+fig1.show()
+
+#to get editcount visualization
+fig1 = analyzer.create_plotly_fig(df1,'name','editcount','editcount',count=False)
+fig1.show()
+
+
+#to get deletecount visualization
+fig1 = analyzer.create_plotly_fig(df1,'name','deletecount','deletecount',count=False)
+fig1.show()
 ```
 
 
