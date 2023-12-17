@@ -39,6 +39,7 @@ analyzer.generate_wordcloud(df["message"].str.cat(sep=" "), stop_words2)
 
 ```python
 
+
 analyzer.create_plotly_fig(df,'name','message','message')
 analyzer.create_plotly_fig(df,'ym','message','ym',True)
 #create_plotly_fig(df,'dt','message','dt',True)
@@ -46,32 +47,13 @@ analyzer.create_plotly_fig(df,'day','message','day',False)
 analyzer.create_plotly_fig(df,'yd','message','yd',True)
 analyzer.create_plotly_fig(df,'name','emojicount','emojicount',True,False)
 analyzer.create_plotly_fig(df,'name','urlcount','urlcount',True,False)
-
-
-#to get emojicount visualization
-fig1 = analyzer.create_plotly_fig(df1,'name','emojicount','emojicount')
-fig1.show()
-
-#to get urlcount visualization
-fig1 = analyzer.create_plotly_fig(df1,'name','urlcount','urlcount')
-fig1.show()
-
-#to get yturlcount visualization
-fig1 = analyzer.create_plotly_fig(df1,'name','yturlcount','yturlcount')
-fig1.show()
-
-#to get mediacount visualization
-fig1 = analyzer.create_plotly_fig(df1,'name','mediacount','mediacount',count=False)
-fig1.show()
-
-#to get editcount visualization
-fig1 = analyzer.create_plotly_fig(df1,'name','editcount','editcount',count=False)
-fig1.show()
-
-
-#to get deletecount visualization
-fig1 = analyzer.create_plotly_fig(df1,'name','deletecount','deletecount',count=False)
-fig1.show()
+analyzer.create_plotly_fig(df1,'name','emojicount','emojicount')
+analyzer.create_plotly_fig(df1,'name','urlcount','urlcount')
+analyzer.create_plotly_fig(df1,'name','yturlcount','yturlcount')
+analyzer.create_plotly_fig(df1,'name','mediacount','mediacount',count=False)
+analyzer.create_plotly_fig(df1,'name','editcount','editcount',count=False)
+fig = analyzer.create_plotly_fig(df1,'name','deletecount','deletecount',count=False)
+fig.write_image("./data/figure_3.png")
 ```
 
 
@@ -101,3 +83,42 @@ other task yet to accomplish are :
     topEmojis_I : It will return top-10 emjois used by individual user.
     saveDatframe : It will save the preprocessed data as csv file.
 
+## Using plotnine.ggplot
+
+```python
+
+import numpy as np
+import pandas as pd
+from plotnine import *
+
+%matplotlib inline
+#df1
+#ggplot(df1, aes(x='month', y='mlen')) + geom_point()
+
+import pandas as pd 
+from plotnine import ggplot, aes, facet_grid, labs, geom_col 
+  
+# reading dataset 
+xd, yd, color = "day","mlen", 'day'
+#+ facet_grid(facets="~year")
+#p1.save(filename="./data/figure_1.png", quiet=True)
+#plot = ggplot(df1, aes(x=xd, y=yd, fill=color)) + labs( x=xd, y=yd) + geom_col()
+#plot = ggplot(df1, aes(x='date_time')) + geom_line(stat='count', color='blue') 
+#plot = ggplot(df1, aes(x='dow', y='mlen')) + geom_line(stat='sum', color='blue') 
+#plot = ggplot(df1, aes(x='dow', y='mlen')) + geom_bar(stat='sum')
+#plot = ggplot(df1, aes(x='month', y='mlen',color='mlen')) + geom_point() 
+#plot = ggplot(df1, aes(x='emojicount')) + geom_histogram(binwidth=1, fill='blue', color='black', alpha=0.7) 
+#plot = ggplot(df1, aes(x='monthn', y='editcount')) + geom_boxplot()
+#plot = ggplot(df1, aes(x='dow', y='hour')) + geom_tile(aes(fill='mlen'), color='white') + scale_fill_gradient(low='white', high='blue') 
+#plot = ggplot(df1, aes(x='day')) + geom_bar(stat='count', fill='green') + coord_flip()
+#plot = ggplot(df1, aes(x='month')) +geom_bar(stat='count', fill='green') + coord_flip()
+#plot = ggplot(df1, aes(x='mlen')) +geom_histogram(binwidth=10, fill='orange', color='black', alpha=0.7) 
+
+#plot = (ggplot(df1, aes(x="hour", y="emojicount", color="ym")) +geom_point() +facet_wrap("~year") +labs(x="Hour of Day", y="Emoji Count", title="Emojis by Hour and Month"))
+plot = (ggplot(df1, aes(x="hour", y="emojicount", color="ym")) +geom_point() +facet_wrap('~ym') +labs(x="Hour of Day", y="Emoji Count", title="Emojis by Hour and Month"))
+plot = (ggplot(df1, aes(x="mlen")) + geom_histogram(bins=30) +labs(x="Message Length", y="Count", title="Distribution of Message Lengths"))
+print(plot)
+
+
+
+```
