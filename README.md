@@ -117,7 +117,16 @@ xd, yd, color = "day","mlen", 'day'
 #plot = (ggplot(df1, aes(x="hour", y="emojicount", color="ym")) +geom_point() +facet_wrap("~year") +labs(x="Hour of Day", y="Emoji Count", title="Emojis by Hour and Month"))
 plot = (ggplot(df1, aes(x="hour", y="emojicount", color="ym")) +geom_point() +facet_wrap('~ym') +labs(x="Hour of Day", y="Emoji Count", title="Emojis by Hour and Month"))
 plot = (ggplot(df1, aes(x="mlen")) + geom_histogram(bins=30) +labs(x="Message Length", y="Count", title="Distribution of Message Lengths"))
+plot = (
+    ggplot(df1, aes(x="mlen", color="dow")) +
+    geom_histogram(bins=30) +
+    facet_wrap('~dow') +
+    labs(x="Message Length", y="Count", title="Message Length Distribution by Name")
+)
+
 print(plot)
+
+
 
 
 
