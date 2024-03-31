@@ -4,6 +4,7 @@
 
 ```bash
 pip install -e git+https://github.com/gauravmeena0708/whatsapp-tools#egg=whatsapp-tools
+pip install emoji wordcloud
 ```
 
 ### Example Use
