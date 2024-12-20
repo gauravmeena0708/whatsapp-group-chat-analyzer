@@ -137,3 +137,7 @@ from plotnine.data import mtcars
  + stat_smooth(method="lm")
  + facet_wrap("~gear"))
 ```
+
+## Inspiration
+
+1. [https://github.com/TJMusiitwa/FabFamilyWhatsappChatAnalysis](https://github.com/TJMusiitwa/FabFamilyWhatsappChatAnalysis)
