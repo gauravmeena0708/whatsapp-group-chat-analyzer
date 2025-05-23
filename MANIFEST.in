@@ -2,3 +2,8 @@ include pyproject.toml
 include *.md
 include LICENSE
 recursive-include tests test*.py
+include requirements.txt
+recursive-include backend *.js
+recursive-include backend *.json
+recursive-include frontend *.html
+recursive-include frontend *.js
