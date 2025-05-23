@@ -7,6 +7,9 @@ import matplotlib.pyplot as plt
 from calendar import day_name
 import numpy as np
 import plotly.express as px
+import argparse
+import os
+import json
 
 """
 from groupanalyzer import GroupAnalyzer
@@ -61,7 +64,7 @@ class GroupAnalyzer:
 
         return chunks
 
-    def generate_wordcloud(self, text, stop_words):
+    def generate_wordcloud(self, text, stop_words, output_path): # Added output_path
         text = re.sub(r"<Media omitted>", "", text)
         text = re.sub(r"https", "", text)
 
@@ -76,7 +79,10 @@ class GroupAnalyzer:
         plt.figure(figsize=(32, 18))
         plt.imshow(wordcloud, interpolation="bilinear")
         plt.axis("off")
-        plt.show()
+        # plt.show() # Removed
+        plt.savefig(output_path) # Added
+        plt.close() # Close the figure to free memory
+        return output_path # Added
         
     def get_emojis(self, text):
         emoji_list = []
@@ -165,6 +171,43 @@ class GroupAnalyzer:
           # Show the figure.
         return fig #.show()
 
+    def get_basic_stats(self, df):
+        """Calculates basic statistics from the cleaned chat DataFrame."""
+        if df.empty:
+            return {
+                "total_users": 0,
+                "total_messages": 0,
+                "total_media_messages": 0,
+                "total_links_shared": 0,
+                "error": "DataFrame is empty."
+            }
+        
+        stats = {
+            "total_users": df['name'].nunique() if 'name' in df.columns else 0,
+            "total_messages": len(df),
+            "total_media_messages": int(df['mediacount'].sum()) if 'mediacount' in df.columns else 0,
+            "total_links_shared": int(df['urlcount'].sum()) if 'urlcount' in df.columns else 0
+        }
+        return stats
+
+    def get_top_emojis_global(self, df, top_n=20):
+        """Extracts and counts top N emojis globally from the 'emoji' column."""
+        if df.empty or 'emoji' not in df.columns or df['emoji'].apply(lambda x: isinstance(x, list) and len(x) == 0).all():
+            return pd.DataFrame(columns=['emoji', 'count']) # Return empty DataFrame
+
+        emojis_series = df['emoji'].explode().dropna()
+        if emojis_series.empty:
+            return pd.DataFrame(columns=['emoji', 'count'])
+
+        emoji_counts = emojis_series.value_counts().head(top_n)
+        emoji_df = emoji_counts.reset_index()
+        # Ensure correct column names after reset_index for recent pandas versions
+        if emoji_df.shape[1] == 2: # Check if reset_index produced two columns
+             emoji_df.columns = ['emoji', 'count']
+        else: # Fallback for older pandas or unexpected behavior
+            emoji_df = pd.DataFrame({'emoji': emoji_counts.index, 'count': emoji_counts.values})
+        return emoji_df
+
         """
         from nltk.corpus import stopwords
         from nltk.tokenize import word_tokenize
@@ -190,3 +233,189 @@ class GroupAnalyzer:
 
 
         """
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Analyze WhatsApp chat data and generate reports.")
+    parser.add_argument("--input_file", required=True, help="Path to the input WhatsApp chat TXT file.")
+    parser.add_argument("--output_dir", required=True, help="Directory to save generated files (plots, CSVs).")
+    parser.add_argument(
+        "--analyses",
+        type=str,
+        default="wordcloud,chat_data_csv",
+        help="Comma-separated string of analyses to run (e.g., 'wordcloud,chat_data_csv,message_count_plot'). Default: 'wordcloud,chat_data_csv'."
+    )
+
+    args = parser.parse_args()
+
+    # The script assumes output_dir exists, as per subtask instructions.
+    # os.makedirs(args.output_dir, exist_ok=True) # Would be added for robustness
+
+    analyzer = GroupAnalyzer(args.input_file)
+    df_raw = analyzer.parse_chat_data()
+    
+    results = {}
+
+    if not df_raw.empty:
+        df_cleaned = analyzer.df_basic_cleanup(df_raw.copy()) # Use .copy()
+
+        analyses_to_run = [analysis.strip() for analysis in args.analyses.split(',')]
+
+        # 1. Generate Word Cloud (if requested)
+        if "wordcloud" in analyses_to_run:
+            if "message" in df_cleaned.columns and not df_cleaned["message"].empty:
+                text_for_wordcloud = " ".join(df_cleaned["message"].astype(str).tolist())
+                # Ensure nltk stopwords are available. 
+                # For this subtask, we assume 'stopwords' corpus is available.
+                # try:
+                #     from nltk.corpus import stopwords
+                # except LookupError:
+                #     nltk.download('stopwords', quiet=True) # quiet=True to avoid verbose output
+                #     from nltk.corpus import stopwords
+                stop_words_list = stopwords.words('english') # Default English stopwords
+                
+                wordcloud_filename = "wordcloud.png"
+                wordcloud_output_path = os.path.join(args.output_dir, wordcloud_filename)
+                
+                generated_wordcloud_path = analyzer.generate_wordcloud(
+                    text_for_wordcloud, 
+                    stop_words_list, 
+                    wordcloud_output_path
+                )
+                results["wordcloud_image"] = generated_wordcloud_path
+            else:
+                results["wordcloud_image"] = None # Or an error message / empty string
+
+        # 2. Save Cleaned DataFrame to CSV (if requested)
+        if "chat_data_csv" in analyses_to_run:
+            csv_filename = "chat_data.csv"
+            csv_output_path = os.path.join(args.output_dir, csv_filename)
+            df_cleaned.to_csv(csv_output_path, index=False)
+            results["chat_data_csv"] = csv_output_path
+        
+        # Example for a Plotly figure (e.g., message count by user)
+        
+        # 3. Basic Statistics (if requested)
+        if "basic_stats" in analyses_to_run:
+            if not df_cleaned.empty:
+                basic_stats_data = analyzer.get_basic_stats(df_cleaned)
+                results["basic_stats_data"] = basic_stats_data
+            else:
+                results["basic_stats_data"] = {"error": "Cleaned DataFrame is empty, cannot generate basic stats."}
+
+        # 4. Most Active Users Plot (if requested)
+        if "most_active_users_plot" in analyses_to_run:
+            if not df_cleaned.empty and 'name' in df_cleaned.columns and 'message' in df_cleaned.columns:
+                try:
+                    fig_active_users = analyzer.create_plotly_fig(
+                        df_cleaned, 
+                        x='name', 
+                        y='message', 
+                        sortby='message', 
+                        asc=False, 
+                        count=True
+                    )
+                    fig_active_users.update_layout(title_text="Most Active Users by Message Count")
+                    plot_filename = "most_active_users.png"
+                    plot_output_path = os.path.join(args.output_dir, plot_filename)
+                    fig_active_users.write_image(plot_output_path) 
+                    results["most_active_users_plot"] = plot_output_path
+                except ImportError:
+                     results["most_active_users_plot"] = "Skipped: kaleido package not installed, required for image export."
+                except Exception as e:
+                    results["most_active_users_plot"] = f"Error generating most_active_users_plot: {str(e)}"
+            else:
+                results["most_active_users_plot"] = "Skipped: Dataframe empty or missing 'name'/'message' columns."
+
+        # 5. Most Active Day Plot (if requested)
+        if "most_active_day_plot" in analyses_to_run:
+            if not df_cleaned.empty and 'dayn' in df_cleaned.columns and 'message' in df_cleaned.columns:
+                try:
+                    # For specific day order (Mon-Sun), 'dayn' should be categorical with order.
+                    # Example:
+                    # days_ordered = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+                    # df_cleaned['dayn'] = pd.Categorical(df_cleaned['dayn'], categories=days_ordered, ordered=True)
+                    # Then, create_plotly_fig would need to respect this if sortby is not used or groups are pre-sorted.
+                    # For now, default sort by count is used.
+                    fig_active_day = analyzer.create_plotly_fig(
+                        df_cleaned, 
+                        x='dayn', 
+                        y='message', 
+                        sortby='message', # This will sort by count, not by day order
+                        asc=False, 
+                        count=True
+                    )
+                    fig_active_day.update_layout(title_text="Most Active Days of the Week by Message Count")
+                    plot_filename = "most_active_day.png"
+                    plot_output_path = os.path.join(args.output_dir, plot_filename)
+                    fig_active_day.write_image(plot_output_path)
+                    results["most_active_day_plot"] = plot_output_path
+                except ImportError:
+                     results["most_active_day_plot"] = "Skipped: kaleido package not installed, required for image export."
+                except Exception as e:
+                    results["most_active_day_plot"] = f"Error generating most_active_day_plot: {str(e)}"
+            else:
+                results["most_active_day_plot"] = "Skipped: Dataframe empty or missing 'dayn'/'message' columns."
+
+        # 6. Top Emojis Global CSV (if requested)
+        if "top_emojis_global_csv" in analyses_to_run:
+            if not df_cleaned.empty and 'emoji' in df_cleaned.columns:
+                try:
+                    top_emojis_df = analyzer.get_top_emojis_global(df_cleaned, top_n=20)
+                    if not top_emojis_df.empty:
+                        csv_filename = "top_emojis_global.csv"
+                        csv_output_path = os.path.join(args.output_dir, csv_filename)
+                        top_emojis_df.to_csv(csv_output_path, index=False)
+                        results["top_emojis_global_csv"] = csv_output_path
+                    else:
+                        results["top_emojis_global_csv"] = "Skipped: No emojis found or DataFrame was empty after processing."
+                except Exception as e:
+                    results["top_emojis_global_csv"] = f"Error generating top_emojis_global_csv: {str(e)}"
+            else:
+                results["top_emojis_global_csv"] = "Skipped: Dataframe empty or missing 'emoji' column."
+        
+        # --- Placeholder for message_count_plot (example from previous state) ---
+        # This can be removed or adapted if it's one of the explicitly requested analyses.
+        # For now, it's left as a non-default analysis.
+        if "message_count_plot" in analyses_to_run: # This was an example, keeping it conditional
+            if not df_cleaned.empty and 'name' in df_cleaned.columns and 'message' in df_cleaned.columns:
+                try:
+                    fig_message_count = analyzer.create_plotly_fig(df_cleaned, 'name', 'message', 'message', count=True)
+                    fig_message_count.update_layout(title_text="Message Count by User (Example)")
+                    plot_filename = "message_count_by_user_example.png" # Renamed to avoid conflict if it becomes a standard analysis
+                    plot_output_path = os.path.join(args.output_dir, plot_filename)
+                    fig_message_count.write_image(plot_output_path) 
+                    results["message_count_plot_example"] = plot_output_path # Renamed key
+                except ImportError:
+                    results["message_count_plot_example"] = "Skipped example plot: kaleido not installed."
+                except Exception as e:
+                    results["message_count_plot_example"] = f"Error generating example message_count_plot: {str(e)}"
+            else:
+                results["message_count_plot_example"] = "Skipped example plot: Dataframe empty or missing 'name'/'message' columns."
+    else:
+        # Handle empty raw dataframe (e.g. if file was empty or parsing failed)
+        results["error"] = "Input file could not be parsed or was empty."
+        # Initialize keys for requested analyses to None if df_raw is empty or processing failed early
+        requested_analyses_list = args.analyses.split(',') if args.analyses else ["wordcloud","chat_data_csv"]
+        default_keys_if_empty_df = {
+            "wordcloud_image": None,
+            "chat_data_csv": None,
+            "basic_stats_data": {"error": "Input file could not be parsed or was empty."},
+            "most_active_users_plot": "Skipped: Input file could not be parsed or was empty.",
+            "most_active_day_plot": "Skipped: Input file could not be parsed or was empty.",
+            "top_emojis_global_csv": "Skipped: Input file could not be parsed or was empty."
+        }
+        for key in requested_analyses_list:
+            # map analysis name to result key if different
+            # e.g. if analysis name is 'most_active_users' and key is 'most_active_users_plot'
+            # This is a simplified mapping for now.
+            mapped_key = key 
+            if key == "most_active_users": mapped_key = "most_active_users_plot"
+            if key == "most_active_day": mapped_key = "most_active_day_plot"
+            if key == "top_emojis_global": mapped_key = "top_emojis_global_csv"
+
+            if mapped_key not in results and mapped_key in default_keys_if_empty_df:
+                 results[mapped_key] = default_keys_if_empty_df[mapped_key]
+
+
+    # Print the JSON object to stdout
+    print(json.dumps(results, indent=2)) # indent for readability if viewed directly

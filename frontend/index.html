@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="whatsAppAnalyzerApp">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Analyzer Web</title>
+    <!-- Bootstrap CSS CDN -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css"
+          integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu"
+          crossorigin="anonymous">
+    <!-- Angular 1.x CDN -->
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+    <!-- App Script -->
+    <script src="app.js"></script>
+    <style>
+        .results-container { margin-top: 30px; }
+        .results-container img { max-width: 100%; height: auto; border: 1px solid #ddd; margin-bottom: 15px; }
+        .loading-message, .error-message { margin-top: 15px; }
+        .analysis-selection { margin-bottom: 20px; }
+        .analysis-result-section { margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
+        .analysis-result-section:last-child { border-bottom: none; }
+    </style>
+</head>
+<body ng-controller="MainController as mainCtrl" class="container">
+    <div class="page-header">
+        <h1>WhatsApp Analyzer Web</h1>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8"> <!-- Widened column for more space -->
+            <form name="uploadForm">
+                <div class="form-group">
+                    <label for="chatFile">Choose WhatsApp Chat File (.txt)</label>
+                    <input type="file" id="chatFile" class="form-control" accept=".txt">
+                </div>
+
+                <!-- Analysis Selection UI -->
+                <div class="form-group analysis-selection">
+                    <h4>Select Analyses to Perform:</h4>
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <div class="checkbox">
+                                <label><input type="checkbox" ng-model="mainCtrl.selectedAnalyses.wordcloud"> Word Cloud</label>
+                            </div>
+                            <div class="checkbox">
+                                <label><input type="checkbox" ng-model="mainCtrl.selectedAnalyses.chat_data_csv"> Chat Data (CSV)</label>
+                            </div>
+                            <div class="checkbox">
+                                <label><input type="checkbox" ng-model="mainCtrl.selectedAnalyses.basic_stats"> Basic Statistics</label>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="checkbox">
+                                <label><input type="checkbox" ng-model="mainCtrl.selectedAnalyses.most_active_users_plot"> Most Active Users (Plot)</label>
+                            </div>
+                            <div class="checkbox">
+                                <label><input type="checkbox" ng-model="mainCtrl.selectedAnalyses.most_active_day_plot"> Most Active Day (Plot)</label>
+                            </div>
+                            <div class="checkbox">
+                                <label><input type="checkbox" ng-model="mainCtrl.selectedAnalyses.top_emojis_global_csv"> Top Emojis Globally (CSV)</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="button" class="btn btn-primary btn-lg" ng-click="mainCtrl.uploadFile()" ng-disabled="mainCtrl.isLoading">
+                    <span ng-if="!mainCtrl.isLoading" class="glyphicon glyphicon-upload"></span>
+                    <span ng-if="mainCtrl.isLoading" class="glyphicon glyphicon-refresh glyphicon-spin"></span>
+                    {{ mainCtrl.isLoading ? 'Analyzing...' : 'Upload and Analyze' }}
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Loading Indicator -->
+    <div ng-if="mainCtrl.isLoading" class="alert alert-info loading-message">
+        <span class="glyphicon glyphicon-refresh glyphicon-spin"></span> Processing your chat file, please wait...
+    </div>
+
+    <!-- Error Display -->
+    <div ng-if="mainCtrl.error" class="alert alert-danger error-message">
+        <strong>Error:</strong> {{ mainCtrl.error }}
+    </div>
+
+    <!-- Results Display Area -->
+    <div ng-if="mainCtrl.analysisResults" class="results-container panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">Analysis Results</h3>
+        </div>
+        <div class="panel-body">
+
+            <!-- Basic Statistics -->
+            <div ng-if="mainCtrl.analysisResults.basic_stats_data" class="analysis-result-section">
+                <h4>Basic Statistics:</h4>
+                <ul class="list-group" ng-if="!mainCtrl.analysisResults.basic_stats_data.error">
+                    <li class="list-group-item" ng-repeat="(key, value) in mainCtrl.analysisResults.basic_stats_data">
+                        <strong>{{ key.replace('_', ' ') | titlecase }}:</strong> {{ value }}
+                    </li>
+                </ul>
+                 <div ng-if="mainCtrl.analysisResults.basic_stats_data.error" class="alert alert-warning">
+                    {{ mainCtrl.analysisResults.basic_stats_data.error }}
+                </div>
+            </div>
+
+            <!-- Word Cloud Image -->
+            <div ng-if="mainCtrl.analysisResults.hasOwnProperty('wordcloud_image')" class="analysis-result-section">
+                <h4>Word Cloud:</h4>
+                <div ng-if="mainCtrl.isResultAPath(mainCtrl.analysisResults.wordcloud_image)">
+                    <img ng-src="{{ mainCtrl.getResultFileUrl(mainCtrl.analysisResults.wordcloud_image) }}" 
+                         alt="Word Cloud" class="img-responsive img-thumbnail">
+                    <p><a ng-href="{{ mainCtrl.getResultFileUrl(mainCtrl.analysisResults.wordcloud_image) }}" 
+                           target="_blank" class="btn btn-sm btn-default">View Full Size Image</a></p>
+                </div>
+                <div ng-if="!mainCtrl.isResultAPath(mainCtrl.analysisResults.wordcloud_image)" class="alert alert-warning">
+                    {{ mainCtrl.analysisResults.wordcloud_image || "Word cloud could not be generated or was not requested." }}
+                </div>
+            </div>
+
+            <!-- Most Active Users Plot -->
+            <div ng-if="mainCtrl.analysisResults.hasOwnProperty('most_active_users_plot')" class="analysis-result-section">
+                <h4>Most Active Users:</h4>
+                <div ng-if="mainCtrl.isResultAPath(mainCtrl.analysisResults.most_active_users_plot)">
+                    <img ng-src="{{ mainCtrl.getResultFileUrl(mainCtrl.analysisResults.most_active_users_plot) }}" 
+                         alt="Most Active Users Plot" class="img-responsive img-thumbnail">
+                    <p><a ng-href="{{ mainCtrl.getResultFileUrl(mainCtrl.analysisResults.most_active_users_plot) }}" 
+                           target="_blank" class="btn btn-sm btn-default">View Full Size Image</a></p>
+                </div>
+                <div ng-if="!mainCtrl.isResultAPath(mainCtrl.analysisResults.most_active_users_plot)" class="alert alert-warning">
+                    {{ mainCtrl.analysisResults.most_active_users_plot || "Most active users plot could not be generated or was not requested." }}
+                </div>
+            </div>
+
+            <!-- Most Active Day Plot -->
+            <div ng-if="mainCtrl.analysisResults.hasOwnProperty('most_active_day_plot')" class="analysis-result-section">
+                <h4>Most Active Days:</h4>
+                <div ng-if="mainCtrl.isResultAPath(mainCtrl.analysisResults.most_active_day_plot)">
+                    <img ng-src="{{ mainCtrl.getResultFileUrl(mainCtrl.analysisResults.most_active_day_plot) }}" 
+                         alt="Most Active Day Plot" class="img-responsive img-thumbnail">
+                    <p><a ng-href="{{ mainCtrl.getResultFileUrl(mainCtrl.analysisResults.most_active_day_plot) }}" 
+                           target="_blank" class="btn btn-sm btn-default">View Full Size Image</a></p>
+                </div>
+                <div ng-if="!mainCtrl.isResultAPath(mainCtrl.analysisResults.most_active_day_plot)" class="alert alert-warning">
+                    {{ mainCtrl.analysisResults.most_active_day_plot || "Most active day plot could not be generated or was not requested." }}
+                </div>
+            </div>
+            
+            <!-- Chat Data CSV Download Link -->
+            <div ng-if="mainCtrl.analysisResults.hasOwnProperty('chat_data_csv')" class="analysis-result-section">
+                <h4>Chat Data (CSV):</h4>
+                <div ng-if="mainCtrl.isResultAPath(mainCtrl.analysisResults.chat_data_csv)">
+                    <p><a ng-href="{{ mainCtrl.getResultFileUrl(mainCtrl.analysisResults.chat_data_csv) }}" 
+                           download="chat_data.csv" class="btn btn-success">
+                           <span class="glyphicon glyphicon-download-alt"></span> Download Chat Data (CSV)
+                    </a></p>
+                </div>
+                <div ng-if="!mainCtrl.isResultAPath(mainCtrl.analysisResults.chat_data_csv)" class="alert alert-warning">
+                     {{ mainCtrl.analysisResults.chat_data_csv || "Chat data CSV could not be generated or was not requested." }}
+                </div>
+            </div>
+
+            <!-- Top Emojis Global CSV -->
+            <div ng-if="mainCtrl.analysisResults.hasOwnProperty('top_emojis_global_csv')" class="analysis-result-section">
+                <h4>Top Emojis Globally (CSV):</h4>
+                 <div ng-if="mainCtrl.isResultAPath(mainCtrl.analysisResults.top_emojis_global_csv)">
+                    <p><a ng-href="{{ mainCtrl.getResultFileUrl(mainCtrl.analysisResults.top_emojis_global_csv) }}" 
+                           download="top_emojis_global.csv" class="btn btn-success">
+                           <span class="glyphicon glyphicon-download-alt"></span> Download Top Emojis (CSV)
+                    </a></p>
+                </div>
+                <div ng-if="!mainCtrl.isResultAPath(mainCtrl.analysisResults.top_emojis_global_csv)" class="alert alert-warning">
+                     {{ mainCtrl.analysisResults.top_emojis_global_csv || "Top emojis CSV could not be generated or was not requested." }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Debug: Display raw analysis results -->
+    <!-- 
+    <div ng-if="mainCtrl.analysisResults" style="margin-top: 20px;">
+        <h4>Raw Backend Response (for debugging):</h4>
+        <pre>{{ mainCtrl.analysisResults | json }}</pre>
+    </div>
+    -->
+
+</body>
+</html>

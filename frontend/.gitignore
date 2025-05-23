@@ -1,0 +1,10 @@
+# Placeholder for future build artifacts or local dependencies
+# For now, we are using CDNs, so this might not be strictly necessary.
+# However, it's good practice to have it.
+
+# Example: Ignore node_modules if we were to use a local package manager
+# node_modules/
+
+# Example: Ignore build output if we had a build process
+# dist/
+# build/
