@@ -1,5 +1,81 @@
 # Whatsapp Tools
 
+## Web Application Interface
+
+This project also includes a web-based interface for analyzing WhatsApp chat files.
+
+### Setup
+
+Follow these steps to set up and run the web application on your local machine.
+
+#### Prerequisites
+
+*   **Node.js and npm:** Ensure you have Node.js (which includes npm) installed. You can download it from [nodejs.org](https://nodejs.org/).
+*   **Python 3 and pip:** Ensure you have Python 3 and pip (Python's package installer) installed. You can download Python from [python.org](https://python.org/).
+
+#### Backend Setup
+
+1.  **Navigate to the backend directory:**
+    ```bash
+    cd backend
+    ```
+2.  **Install Node.js dependencies:**
+    ```bash
+    npm install
+    ```
+    This will install Express.js, multer, cors, and other necessary packages.
+
+#### Python Environment Setup
+
+1.  **Navigate to the project root directory** (if you are in the `backend` directory, use `cd ..`).
+2.  **Create a Python virtual environment (recommended):**
+    ```bash
+    python3 -m venv venv
+    ```
+3.  **Activate the virtual environment:**
+    *   On macOS and Linux:
+        ```bash
+        source venv/bin/activate
+        ```
+    *   On Windows:
+        ```bash
+        venv\Scripts\activate
+        ```
+4.  **Install Python dependencies:**
+    Make sure you are in the project root directory where `requirements.txt` is located.
+    ```bash
+    pip install -r requirements.txt
+    ```
+5.  **Download NLTK stopwords corpus (one-time setup):**
+    If this is your first time using NLTK or this specific corpus, you'll need to download it. Run the following in a Python interpreter:
+    ```python
+    import nltk
+    nltk.download('stopwords')
+    ```
+    You can exit the Python interpreter after the download is complete.
+
+### Running the Application
+
+1.  **Start the Backend Server:**
+    *   Navigate to the backend directory:
+        ```bash
+        cd backend
+        ```
+    *   Run the server:
+        ```bash
+        node index.js
+        ```
+        Alternatively, if you have `nodemon` installed, you can use `nodemon index.js` for automatic restarts on file changes.
+    *   The backend server will typically start on `http://localhost:3000`. You should see a confirmation message in your terminal.
+
+2.  **Access the Frontend:**
+    *   Open the `frontend/index.html` file directly in your web browser (e.g., by navigating to its location on your filesystem and double-clicking it, or using your browser's "Open File" option).
+    *   **Usage:**
+        1.  Click "Choose WhatsApp Chat File (.txt)" to select your exported WhatsApp chat file.
+        2.  Select the analyses you want to perform using the checkboxes.
+        3.  Click the "Upload and Analyze" button.
+        4.  Wait for the processing to complete. Results (statistics, plots, download links) will be displayed on the page.
+
 ## install
 
 ```bash

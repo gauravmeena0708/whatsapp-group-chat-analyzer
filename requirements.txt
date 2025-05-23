@@ -1,0 +1,9 @@
+pandas
+nltk
+emoji
+wordcloud
+matplotlib
+plotly
+kaleido
+numpy
+regex

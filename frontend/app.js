@@ -71,14 +71,22 @@
                 }
                 vm.isLoading = false;
             }, function(errorResponse) {
+                var errorMessage = "An error occurred during analysis."; // Default message
                 if (errorResponse.data && errorResponse.data.error) {
-                    vm.error = "An error occurred: " + errorResponse.data.error;
-                    if(errorResponse.data.details) vm.error += " Details: " + errorResponse.data.details;
-                    if(errorResponse.data.rawOutput) console.error("Raw backend output on error: ", errorResponse.data.rawOutput);
-                } else {
-                    vm.error = "An error occurred: " + (errorResponse.statusText || "Unknown server error");
+                    errorMessage = errorResponse.data.error; // Main error message from backend
+                    if (errorResponse.data.details) {
+                        errorMessage += " Details: " + errorResponse.data.details; // Add details if present
+                    }
+                } else if (errorResponse.statusText) {
+                    errorMessage = "Error: " + errorResponse.statusText; // Fallback to status text
                 }
-                console.error('Upload error:', errorResponse);
+                vm.error = errorMessage; // Set the refined error message
+
+                // Log more details to the console for debugging
+                if(errorResponse.data && errorResponse.data.rawOutput) {
+                    console.error("Raw backend output on error: ", errorResponse.data.rawOutput);
+                }
+                console.error('Upload error response:', errorResponse);
                 vm.isLoading = false;
             });
         };
