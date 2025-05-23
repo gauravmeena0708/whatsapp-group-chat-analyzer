@@ -11,6 +11,11 @@ const port = 3000;
 // Enable CORS for all routes
 app.use(cors());
 
+// --- ADDED LINE TO SERVE FRONTEND ---
+// Serve static files from the "frontend" directory when URL starts with /frontend
+app.use('/frontend', express.static(path.join(__dirname, '../frontend')));
+// --- END OF ADDED LINE ---
+
 // --- Multer Configuration for File Uploads ---
 const uploadsDir = path.join(__dirname, 'uploads');
 // Ensure the uploads directory exists
@@ -128,7 +133,6 @@ app.post('/api/analyze', upload.single('chatfile'), (req, res) => {
             console.log("NLTK data download messages were present in stderr, but script succeeded.");
         }
 
-
         try {
             let analysisResult = JSON.parse(scriptOutput);
             
@@ -137,7 +141,11 @@ app.post('/api/analyze', upload.single('chatfile'), (req, res) => {
                 if (analysisResult.hasOwnProperty(key) && typeof analysisResult[key] === 'string') {
                     const absolutePath = analysisResult[key];
                     if (absolutePath.startsWith(baseOutputDir)) {
-                        transformedAnalysisResult[key] = path.relative(__dirname, absolutePath);
+                        // Convert absolute server path to a relative path that the client can use with /api/analysis_results
+                        const relativePathToAnalysisDir = path.relative(baseOutputDir, path.dirname(absolutePath));
+                        const filename = path.basename(absolutePath);
+                        // Construct the URL path
+                        transformedAnalysisResult[key] = `api/analysis_results/${relativePathToAnalysisDir}/${filename}`;
                     } else {
                         transformedAnalysisResult[key] = analysisResult[key]; 
                         console.warn(`Path ${absolutePath} for key ${key} does not start with baseOutputDir ${baseOutputDir}. Using original path.`);
@@ -171,22 +179,24 @@ app.post('/api/analyze', upload.single('chatfile'), (req, res) => {
 
 
 // --- Route to serve generated analysis files ---
+// Make sure this route correctly serves files based on how transformedAnalysisResult paths are constructed
 app.get('/api/analysis_results/:analysisId/:filename', (req, res) => {
     const { analysisId, filename } = req.params;
 
-    const analysisIdPattern = /^analysis-\d{13}-[a-zA-Z0-9]+$/; 
-    if (!analysisIdPattern.test(analysisId) || analysisId.includes('..') || analysisId.includes('/') || analysisId.includes('\\')) {
-        return res.status(400).json({ error: 'Invalid analysis ID format.' });
+    // Basic validation for analysisId and filename to prevent path traversal
+    // The analysisId comes from the directory name created by fs.mkdtempSync
+    // e.g., "analysis-1678886400000-xxxxxxxx" 
+    // You might need a more robust regex depending on your exact fs.mkdtempSync output format
+    const analysisIdPattern = /^analysis-\d{13,}-[a-zA-Z0-9\-]+$/; 
+    if (!analysisIdPattern.test(analysisId) || analysisId.includes('..') || filename.includes('..')) {
+        return res.status(400).json({ error: 'Invalid file path components.' });
     }
-
-    if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
-        return res.status(400).json({ error: 'Invalid filename format.' });
-    }
-
+    
     const resultsBaseDir = path.join(__dirname, 'analysis_results');
     const filePath = path.join(resultsBaseDir, analysisId, filename);
     const resolvedFilePath = path.resolve(filePath); 
 
+    // Security check: Ensure resolved path is still within the intended directory
     if (!resolvedFilePath.startsWith(path.resolve(resultsBaseDir))) {
         console.error(`Attempted directory traversal: ${analysisId}/${filename}`);
         return res.status(403).json({ error: 'Forbidden: Access denied.' });
@@ -198,6 +208,7 @@ app.get('/api/analysis_results/:analysisId/:filename', (req, res) => {
             return res.status(404).json({ error: 'File not found.' });
         }
 
+        // Optional: Set Content-Disposition for CSV files to trigger download
         if (path.extname(filename).toLowerCase() === '.csv') {
             res.setHeader('Content-Disposition', 'attachment; filename="' + filename + '"');
         }
@@ -205,7 +216,7 @@ app.get('/api/analysis_results/:analysisId/:filename', (req, res) => {
         res.sendFile(resolvedFilePath, (sendFileErr) => {
             if (sendFileErr) {
                 console.error(`Error sending file ${resolvedFilePath}:`, sendFileErr);
-                if (!res.headersSent) {
+                if (!res.headersSent) { // Avoid trying to send another response if headers already sent
                     res.status(500).json({ error: 'Error sending file.' });
                 }
             }
@@ -216,4 +227,5 @@ app.get('/api/analysis_results/:analysisId/:filename', (req, res) => {
 
 app.listen(port, () => {
     console.log(`Backend server listening at http://localhost:${port}`);
+    console.log(`Frontend should be accessible at http://localhost:${port}/frontend/index.html (if index.html is in your 'frontend' folder)`);
 });
